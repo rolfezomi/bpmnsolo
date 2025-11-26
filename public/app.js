@@ -71,8 +71,9 @@ async function handleLogin(event) {
   const password = document.getElementById('login_password').value;
   const loginBtn = document.getElementById('loginBtn');
   const loginError = document.getElementById('loginError');
+  const loadingOverlay = document.getElementById('loginLoadingOverlay');
 
-  // Show loading state
+  // Show loading state on button
   loginBtn.classList.add('loading');
   loginBtn.disabled = true;
   loginError.style.display = 'none';
@@ -94,13 +95,41 @@ async function handleLogin(event) {
     currentUser = data;
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-    showToast(`Hosgeldiniz, ${currentUser.ad}!`, 'success');
-    showApp();
+    // Show full screen loading overlay with animated checklist
+    loadingOverlay.classList.add('active');
+
+    // Animate checklist items with delays
+    setTimeout(() => {
+      document.getElementById('checkItem1').classList.add('completed');
+      document.getElementById('loadingStatus').textContent = 'Kullanici dogrulandi';
+    }, 500);
+
+    setTimeout(() => {
+      document.getElementById('checkItem2').classList.add('completed');
+      document.getElementById('loadingStatus').textContent = 'Projeler yukleniyor...';
+    }, 1200);
+
+    setTimeout(() => {
+      document.getElementById('checkItem3').classList.add('completed');
+      document.getElementById('loadingStatus').textContent = 'Neredeyse hazir!';
+    }, 1800);
+
+    // Wait for animation to complete, then show app
+    setTimeout(() => {
+      loadingOverlay.classList.remove('active');
+      // Reset checklist items for next login
+      document.getElementById('checkItem1').classList.remove('completed');
+      document.getElementById('checkItem2').classList.remove('completed');
+      document.getElementById('checkItem3').classList.remove('completed');
+      document.getElementById('loadingStatus').textContent = 'Giris yapiliyor...';
+
+      showToast(`Hosgeldiniz, ${currentUser.ad}!`, 'success');
+      showApp();
+    }, 2500);
 
   } catch (error) {
     document.getElementById('loginErrorText').textContent = error.message;
     loginError.style.display = 'flex';
-  } finally {
     loginBtn.classList.remove('loading');
     loginBtn.disabled = false;
   }
@@ -1921,7 +1950,7 @@ function renderGanttChart(proje, adimlar) {
 
         <!-- Rows -->
         ${ganttRows.map(row => `
-          <div class="gantt-row" onclick="openAdimModal(${row.id})">
+          <div class="gantt-row" onclick="handleGanttRowClick(${row.id})">
             <div class="gantt-task-name" title="${row.baslik}">
               <span class="gantt-task-number">${row.index}.</span>
               ${row.baslik.length > 25 ? row.baslik.substring(0, 25) + '...' : row.baslik}
@@ -1975,6 +2004,15 @@ function isSameDay(date1, date2) {
 function switchProjeView(view) {
   currentGanttView = view;
   openProjeDetay(currentProjeId);
+}
+
+// Gantt satırına tıklandığında - admin ise düzenle, değilse sadece görüntüle
+function handleGanttRowClick(adimId) {
+  if (isAdmin()) {
+    openAdimModal(adimId);
+  } else {
+    openAdimDetay(adimId);
+  }
 }
 
 // ==================== ADMIN PANEL ====================
