@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proje Takip</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --info-color: #06b6d4;
+    }
+
+    /* Keyframe Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes slideInUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    body {
+      background-color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Page Loading Overlay */
+    .page-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .page-loader.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .loader-spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid #e2e8f0;
+      border-top-color: var(--primary-color);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loader-text {
+      margin-top: 16px;
+      color: var(--primary-color);
+      font-weight: 500;
+      font-size: 14px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .loader-progress {
+      width: 200px;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .loader-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    /* Sidebar Animations */
+    .sidebar {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      min-height: 100vh;
+      padding: 0;
+      position: fixed;
+      width: 260px;
+      z-index: 1000;
+      animation: fadeInLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 4px 0 20px rgba(67, 97, 238, 0.15);
+    }
+
+    .sidebar .nav-link {
+      color: rgba(255,255,255,0.8);
+      padding: 12px 24px;
+      border-radius: 8px;
+      margin: 4px 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar .nav-link::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .sidebar .nav-link:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .sidebar .nav-link:hover {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .sidebar .nav-link.active {
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .sidebar .nav-link i {
+      margin-right: 10px;
+      font-size: 1.1rem;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar .nav-link:hover i {
+      transform: scale(1.2);
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      animation: fadeInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+    }
+
+    .sidebar-header h4 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .sidebar-header h4 i {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-header:hover h4 i {
+      transform: rotate(10deg) scale(1.1);
+    }
+
+    .nav-item {
+      animation: fadeInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .nav-item:nth-child(1) { animation-delay: 0.1s; }
+    .nav-item:nth-child(2) { animation-delay: 0.15s; }
+    .nav-item:nth-child(3) { animation-delay: 0.2s; }
+    .nav-item:nth-child(4) { animation-delay: 0.25s; }
+    .nav-item:nth-child(5) { animation-delay: 0.3s; }
+
+    .main-content {
+      margin-left: 260px;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    /* Page Content Animation */
+    #page-content {
+      animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #page-content.page-exit {
+      animation: fadeOut 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+
+    /* Card Animations */
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      transition: left 0.5s;
+    }
+
+    .card:hover::before {
+      left: 100%;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 40px rgba(67, 97, 238, 0.15);
+    }
+
+    /* Staggered card animations */
+    .row .col-md-3:nth-child(1) .card,
+    .row .col-md-6:nth-child(1) .card,
+    .row .col-md-4:nth-child(1) .card,
+    .row .col-lg-4:nth-child(1) .card { animation-delay: 0.1s; }
+    .row .col-md-3:nth-child(2) .card,
+    .row .col-md-6:nth-child(2) .card,
+    .row .col-md-4:nth-child(2) .card,
+    .row .col-lg-4:nth-child(2) .card { animation-delay: 0.2s; }
+    .row .col-md-3:nth-child(3) .card,
+    .row .col-md-4:nth-child(3) .card,
+    .row .col-lg-4:nth-child(3) .card { animation-delay: 0.3s; }
+    .row .col-md-3:nth-child(4) .card,
+    .row .col-md-4:nth-child(4) .card,
+    .row .col-lg-4:nth-child(4) .card { animation-delay: 0.4s; }
+
+    .stat-card {
+      padding: 20px;
+    }
+
+    .stat-card .stat-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .stat-card:hover .stat-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .stat-card .stat-number {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover .stat-number {
+      color: var(--primary-color);
+    }
+
+    .stat-card .stat-label {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    /* Badge Animations */
+    .badge-status {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .badge-status:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .badge-beklemede { background: #fef3c7; color: #d97706; }
+    .badge-devam_ediyor { background: #dbeafe; color: #2563eb; }
+    .badge-tamamlandi { background: #d1fae5; color: #059669; }
+    .badge-iptal { background: #fee2e2; color: #dc2626; }
+
+    .priority-dusuk { border-left: 4px solid #10b981; }
+    .priority-normal { border-left: 4px solid #3b82f6; }
+    .priority-yuksek { border-left: 4px solid #f59e0b; }
+    .priority-kritik { border-left: 4px solid #ef4444; }
+
+    /* Progress Bar Animation */
+    .progress {
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      position: relative;
+    }
+
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    /* Table Animations */
+    .table th {
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table tbody tr {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+    .table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+    .table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+    .table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+    .table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+
+    .table tbody tr:hover {
+      background: rgba(67, 97, 238, 0.05);
+      transform: scale(1.01);
+    }
+
+    /* Button Animations */
+    .btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.4s, height 0.4s;
+    }
+
+    .btn:active::after {
+      width: 200px;
+      height: 200px;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+      background: var(--secondary-color);
+      border-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-secondary:hover,
+    .btn-outline-danger:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Modal Animations */
+    .modal.fade .modal-dialog {
+      transform: scale(0.8) translateY(-50px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal.show .modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: #fff;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .modal-header .btn-close {
+      filter: brightness(0) invert(1);
+      transition: transform 0.3s;
+    }
+
+    .modal-header .btn-close:hover {
+      transform: rotate(90deg);
+    }
+
+    .modal-content {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+    }
+
+    .modal-body {
+      animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+    }
+
+    /* Form Animations */
+    .form-control, .form-select {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid #e2e8f0;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+      transform: translateY(-1px);
+    }
+
+    /* Step Item Animations */
+    .step-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .step-item:nth-child(1) { animation-delay: 0.1s; }
+    .step-item:nth-child(2) { animation-delay: 0.15s; }
+    .step-item:nth-child(3) { animation-delay: 0.2s; }
+    .step-item:nth-child(4) { animation-delay: 0.25s; }
+    .step-item:nth-child(5) { animation-delay: 0.3s; }
+
+    .step-item:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 8px 25px rgba(67, 97, 238, 0.15);
+      transform: translateX(5px);
+    }
+
+    .step-item.completed {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .step-item.in-progress {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .step-item i.bi-check-circle-fill {
+      animation: bounceIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Timeline Animations */
+    .timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--primary-color), #e2e8f0);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 20px;
+      animation: fadeInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+
+    .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+    .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+    .timeline-item:nth-child(4) { animation-delay: 0.4s; }
+    .timeline-item:nth-child(5) { animation-delay: 0.5s; }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.2);
+      transition: all 0.3s;
+    }
+
+    .timeline-item:hover::before {
+      transform: scale(1.3);
+      box-shadow: 0 0 0 6px rgba(67, 97, 238, 0.3);
+    }
+
+    /* Empty State Animation */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+      animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .empty-state i {
+      font-size: 64px;
+      margin-bottom: 16px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Search Box Animation */
+    .search-box {
+      position: relative;
+    }
+
+    .search-box input {
+      padding-left: 40px;
+      border-radius: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .search-box input:focus {
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(67, 97, 238, 0.15);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      transition: color 0.3s;
+    }
+
+    .search-box input:focus + i,
+    .search-box:focus-within i {
+      color: var(--primary-color);
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+    }
+
+    .toast-notification {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      margin-bottom: 10px;
+      animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast-notification.success { border-left: 4px solid var(--success-color); }
+    .toast-notification.error { border-left: 4px solid var(--danger-color); }
+    .toast-notification.info { border-left: 4px solid var(--info-color); }
+
+    /* Skeleton Loading */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+
+    .skeleton-text {
+      height: 16px;
+      margin-bottom: 8px;
+    }
+
+    .skeleton-title {
+      height: 24px;
+      width: 60%;
+      margin-bottom: 12px;
+    }
+
+    .skeleton-card {
+      height: 150px;
+    }
+
+    /* Page Title Animation */
+    h2 {
+      animation: fadeInDown 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    h2 i {
+      transition: transform 0.3s;
+    }
+
+    h2:hover i {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Hover Effects for Interactive Elements */
+    [onclick] {
+      cursor: pointer;
+    }
+
+    /* Scroll Animation Helper */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Gantt Chart Styles */
+    .gantt-container {
+      overflow-x: auto;
+      padding: 20px 0;
+    }
+
+    .gantt-chart {
+      min-width: 800px;
+      position: relative;
+    }
+
+    .gantt-header {
+      display: flex;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .gantt-task-header {
+      width: 250px;
+      min-width: 250px;
+      font-weight: 600;
+      color: #475569;
+      padding: 8px 12px;
+    }
+
+    .gantt-timeline-header {
+      flex: 1;
+      display: flex;
+      position: relative;
+    }
+
+    .gantt-day {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: #64748b;
+      padding: 4px 2px;
+      border-left: 1px solid #f1f5f9;
+      min-width: 40px;
+    }
+
+    .gantt-day.weekend {
+      background: #fef3c7;
+    }
+
+    .gantt-day.today {
+      background: #dbeafe;
+      font-weight: 600;
+      color: #2563eb;
+    }
+
+    .gantt-row {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+      transition: all 0.3s;
+      animation: fadeInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+      cursor: pointer;
+    }
+
+    .gantt-row:hover {
+      background: rgba(67, 97, 238, 0.03);
+    }
+
+    .gantt-task-name {
+      width: 250px;
+      min-width: 250px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gantt-task-name .task-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .gantt-task-name .task-icon.beklemede {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .gantt-task-name .task-icon.devam_ediyor {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .gantt-task-name .task-icon.tamamlandi {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .gantt-task-name .task-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .gantt-timeline {
+      flex: 1;
+      display: flex;
+      position: relative;
+      height: 36px;
+      align-items: center;
+    }
+
+    .gantt-bar-container {
+      position: relative;
+      width: 100%;
+      height: 28px;
+      display: flex;
+      align-items: center;
+    }
+
+    .gantt-grid-cell {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: 1px solid #f1f5f9;
+    }
+
+    .gantt-grid-cell.weekend {
+      background: rgba(254, 243, 199, 0.3);
+    }
+
+    .gantt-grid-cell.today {
+      background: rgba(219, 234, 254, 0.3);
+    }
+
+    .gantt-day-number {
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .gantt-day-month {
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+
+    .gantt-task-number {
+      color: #94a3b8;
+      font-weight: 500;
+      margin-right: 4px;
+    }
+
+    .gantt-today-marker {
+      width: 16px;
+      height: 3px;
+      background: #ef4444;
+      border-radius: 2px;
+    }
+
+    .gantt-bar {
+      position: absolute;
+      height: 24px;
+      border-radius: 12px;
+      min-width: 20px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .gantt-bar:hover {
+      transform: scaleY(1.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .gantt-bar.beklemede {
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    }
+
+    .gantt-bar.devam_ediyor {
+      background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    }
+
+    .gantt-bar.tamamlandi {
+      background: linear-gradient(90deg, #34d399, #10b981);
+    }
+
+    .gantt-bar-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: rgba(255,255,255,0.3);
+      border-radius: 12px 0 0 12px;
+    }
+
+    .gantt-bar-label {
+      font-size: 10px;
+      color: #fff;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      white-space: nowrap;
+      padding: 0 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gantt-today-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #ef4444;
+      z-index: 10;
+    }
+
+    .gantt-today-line::before {
+      content: 'Bugun';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #ef4444;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .gantt-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .gantt-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .gantt-legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .gantt-legend-color.beklemede {
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    }
+
+    .gantt-legend-color.devam_ediyor {
+      background: linear-gradient(90deg, #60a5fa, #3b82f6);
+    }
+
+    .gantt-legend-color.tamamlandi {
+      background: linear-gradient(90deg, #34d399, #10b981);
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .view-toggle .btn {
+      padding: 6px 16px;
+      font-size: 13px;
+    }
+
+    .view-toggle .btn.active {
+      background: var(--primary-color);
+      color: #fff;
+      border-color: var(--primary-color);
+    }
+
+    /* Gantt Tooltip */
+    .gantt-tooltip {
+      position: absolute;
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s;
+      max-width: 250px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .gantt-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .gantt-tooltip-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .gantt-tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .gantt-tooltip-label {
+      color: #94a3b8;
+    }
+
+    /* Progress Circle */
+    .progress-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(
+        var(--primary-color) calc(var(--progress, 0) * 1%),
+        #e2e8f0 0
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-circle::before {
+      content: '';
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .progress-circle-value {
+      position: relative;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-color);
+      z-index: 1;
+    }
+
+    .progress-circle[data-progress="100"] {
+      background: conic-gradient(var(--success-color) 100%, #e2e8f0 0);
+    }
+
+    .progress-circle[data-progress="100"] .progress-circle-value {
+      color: var(--success-color);
+    }
+
+    /* Info Box */
+    .info-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .info-label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    /* Progress Container */
+    .progress-container {
+      position: relative;
+    }
+
+    .progress-label {
+      position: absolute;
+      right: 0;
+      top: -20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .progress-percent {
+      color: var(--primary-color);
+    }
+
+    /* Progress Stats */
+    .progress-stats .progress {
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-stats .progress-bar {
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Overdue Warning */
+    .overdue-warning {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #dc2626;
+      font-size: 13px;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .overdue-warning i {
+      font-size: 16px;
+    }
+
+    /* Multi-Select Component */
+    .multi-select-container {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fff;
+      transition: all 0.3s;
+    }
+
+    .multi-select-container:focus-within {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .selected-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+      min-height: 24px;
+    }
+
+    .selected-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 12px;
+      animation: scaleIn 0.2s ease;
+    }
+
+    .selected-item .remove-item {
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+      font-size: 14px;
+    }
+
+    .selected-item .remove-item:hover {
+      opacity: 1;
+    }
+
+    .dropdown-select {
+      position: relative;
+    }
+
+    .dropdown-select input {
+      border: none;
+      background: #f8fafc;
+      border-radius: 6px;
+    }
+
+    .dropdown-select input:focus {
+      box-shadow: none;
+      background: #f1f5f9;
+    }
+
+    .dropdown-options {
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 8px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .dropdown-option {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      border-radius: 6px;
+      margin: 2px 0;
+    }
+
+    .dropdown-option:hover {
+      background: #e2e8f0;
+    }
+
+    .dropdown-option.selected {
+      background: rgba(67, 97, 238, 0.1);
+      color: var(--primary-color);
+    }
+
+    .dropdown-option .check-icon {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #cbd5e1;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .dropdown-option.selected .check-icon {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+    }
+
+    .dropdown-option .option-text {
+      flex: 1;
+    }
+
+    .dropdown-option .option-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* Atanan kişiler listesi görünümü */
+    .assigned-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .assigned-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .assigned-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      color: #475569;
+    }
+
+    .assigned-badge i {
+      font-size: 10px;
+    }
+
+    .assigned-badge.birim {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .assigned-badge.kisi {
+      background: #d1fae5;
+      color: #059669;
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Loader -->
+  <div class="page-loader" id="pageLoader">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Yukleniyor...</div>
+    <div class="loader-progress">
+      <div class="loader-progress-bar"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h4><i class="bi bi-kanban"></i> Proje Takip</h4>
+    </div>
+    <ul class="nav flex-column mt-3">
+      <li class="nav-item">
+        <a class="nav-link active" href="#" data-page="dashboard">
+          <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-page="projeler">
+          <i class="bi bi-folder"></i> Projeler
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-page="kisiler">
+          <i class="bi bi-people"></i> Kisiler
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-page="birimler">
+          <i class="bi bi-building"></i> Birimler
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-page="departmanlar">
+          <i class="bi bi-diagram-3"></i> Departmanlar
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div id="page-content">
+      <!-- Content will be loaded here -->
+    </div>
+  </div>
+
+  <!-- Proje Modal -->
+  <div class="modal fade" id="projeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-folder-plus"></i> <span id="projeModalTitle">Yeni Proje</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="projeForm">
+            <input type="hidden" id="proje_id">
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label">Proje Adi *</label>
+                <input type="text" class="form-control" id="proje_ad" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Oncelik</label>
+                <select class="form-select" id="proje_oncelik">
+                  <option value="dusuk">Dusuk</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="yuksek">Yuksek</option>
+                  <option value="kritik">Kritik</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Aciklama</label>
+              <textarea class="form-control" id="proje_aciklama" rows="3"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Baslangic Tarihi</label>
+                <input type="date" class="form-control" id="proje_baslangic">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Bitis Tarihi</label>
+                <input type="date" class="form-control" id="proje_bitis">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sorumlu Departman</label>
+                <select class="form-select" id="proje_departman">
+                  <option value="">Secin...</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sorumlu Birim</label>
+                <select class="form-select" id="proje_birim">
+                  <option value="">Secin...</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sorumlu Kisi</label>
+                <select class="form-select" id="proje_kisi">
+                  <option value="">Secin...</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Durum</label>
+              <select class="form-select" id="proje_durum">
+                <option value="beklemede">Beklemede</option>
+                <option value="devam_ediyor">Devam Ediyor</option>
+                <option value="tamamlandi">Tamamlandi</option>
+                <option value="iptal">Iptal</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Iptal</button>
+          <button type="button" class="btn btn-primary" onclick="saveProje()">
+            <i class="bi bi-check-lg"></i> Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adim Modal -->
+  <div class="modal fade" id="adimModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-list-check"></i> <span id="adimModalTitle">Yeni Adim</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="adimForm">
+            <input type="hidden" id="adim_id">
+            <input type="hidden" id="adim_proje_id">
+            <div class="mb-3">
+              <label class="form-label">Adim Basligi *</label>
+              <input type="text" class="form-control" id="adim_baslik" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Aciklama</label>
+              <textarea class="form-control" id="adim_aciklama" rows="2"></textarea>
+            </div>
+
+            <!-- Çoklu Birim Seçimi -->
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-building me-1"></i>Atanan Birimler
+                <span class="text-muted small">(birden fazla secilebilir)</span>
+              </label>
+              <div class="multi-select-container" id="birimlerContainer">
+                <div class="selected-items" id="selectedBirimler"></div>
+                <div class="dropdown-select">
+                  <input type="text" class="form-control form-control-sm" id="birimSearch" placeholder="Birim ara...">
+                  <div class="dropdown-options" id="birimOptions"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Çoklu Kişi Seçimi -->
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-people me-1"></i>Atanan Kisiler
+                <span class="text-muted small">(birden fazla secilebilir)</span>
+              </label>
+              <div class="multi-select-container" id="kisilerContainer">
+                <div class="selected-items" id="selectedKisiler"></div>
+                <div class="dropdown-select">
+                  <input type="text" class="form-control form-control-sm" id="kisiSearch" placeholder="Kisi ara...">
+                  <div class="dropdown-options" id="kisiOptions"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Baslangic</label>
+                <input type="date" class="form-control" id="adim_baslangic">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Bitis</label>
+                <input type="date" class="form-control" id="adim_bitis">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Durum</label>
+              <select class="form-select" id="adim_durum">
+                <option value="beklemede">Beklemede</option>
+                <option value="devam_ediyor">Devam Ediyor</option>
+                <option value="tamamlandi">Tamamlandi</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Notlar</label>
+              <textarea class="form-control" id="adim_notlar" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Iptal</button>
+          <button type="button" class="btn btn-primary" onclick="saveAdim()">
+            <i class="bi bi-check-lg"></i> Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kisi Modal -->
+  <div class="modal fade" id="kisiModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus"></i> <span id="kisiModalTitle">Yeni Kisi</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="kisiForm">
+            <input type="hidden" id="kisi_id">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Ad *</label>
+                <input type="text" class="form-control" id="kisi_ad" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Soyad *</label>
+                <input type="text" class="form-control" id="kisi_soyad" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-posta</label>
+              <input type="email" class="form-control" id="kisi_email">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Telefon</label>
+              <input type="tel" class="form-control" id="kisi_telefon">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Birim</label>
+              <select class="form-select" id="kisi_birim">
+                <option value="">Secin...</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Pozisyon</label>
+              <input type="text" class="form-control" id="kisi_pozisyon">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Iptal</button>
+          <button type="button" class="btn btn-primary" onclick="saveKisi()">
+            <i class="bi bi-check-lg"></i> Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birim Modal -->
+  <div class="modal fade" id="birimModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-building"></i> <span id="birimModalTitle">Yeni Birim</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="birimForm">
+            <input type="hidden" id="birim_id">
+            <div class="mb-3">
+              <label class="form-label">Birim Adi *</label>
+              <input type="text" class="form-control" id="birim_ad" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Departman</label>
+              <select class="form-select" id="birim_departman">
+                <option value="">Secin...</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Aciklama</label>
+              <textarea class="form-control" id="birim_aciklama" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Iptal</button>
+          <button type="button" class="btn btn-primary" onclick="saveBirim()">
+            <i class="bi bi-check-lg"></i> Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Departman Modal -->
+  <div class="modal fade" id="departmanModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-diagram-3"></i> <span id="departmanModalTitle">Yeni Departman</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="departmanForm">
+            <input type="hidden" id="departman_id">
+            <div class="mb-3">
+              <label class="form-label">Departman Adi *</label>
+              <input type="text" class="form-control" id="departman_ad" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Aciklama</label>
+              <textarea class="form-control" id="departman_aciklama" rows="3"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Iptal</button>
+          <button type="button" class="btn btn-primary" onclick="saveDepartman()">
+            <i class="bi bi-check-lg"></i> Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
