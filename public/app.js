@@ -411,50 +411,56 @@ async function openProjeDetay(id) {
         </button>
       </div>
     ` : adimlar.map((a, index) => `
-      <div class="step-item ${a.durum === 'tamamlandi' ? 'completed' : a.durum === 'devam_ediyor' ? 'in-progress' : ''}" style="animation-delay: ${index * 0.1}s">
+      <div class="step-item clickable ${a.durum === 'tamamlandi' ? 'completed' : a.durum === 'devam_ediyor' ? 'in-progress' : ''}"
+           style="animation-delay: ${index * 0.1}s; cursor: pointer;"
+           onclick="openAdimDetay(${a.id})">
         <div class="d-flex justify-content-between align-items-start">
-          <div class="d-flex align-items-start">
+          <div class="d-flex align-items-start flex-grow-1">
             <div class="me-3">
               ${a.durum === 'tamamlandi' ?
-                '<i class="bi bi-check-circle-fill text-success fs-5"></i>' :
+                '<i class="bi bi-check-circle-fill text-success fs-4"></i>' :
                 a.durum === 'devam_ediyor' ?
-                '<i class="bi bi-play-circle-fill text-primary fs-5"></i>' :
-                '<i class="bi bi-circle text-muted fs-5"></i>'
+                '<i class="bi bi-play-circle-fill text-primary fs-4"></i>' :
+                '<i class="bi bi-circle text-muted fs-4"></i>'
               }
             </div>
-            <div>
-              <strong>${index + 1}. ${a.baslik}</strong>
-              ${a.aciklama ? `<p class="text-muted small mb-1">${a.aciklama}</p>` : ''}
-              <div class="small mt-1">
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <strong>${index + 1}. ${a.baslik}</strong>
+                <span class="badge badge-status badge-${a.durum} ms-2">${formatDurum(a.durum)}</span>
+              </div>
+              ${a.aciklama ? `<p class="text-muted small mb-2">${a.aciklama.substring(0, 100)}${a.aciklama.length > 100 ? '...' : ''}</p>` : ''}
+              <div class="d-flex flex-wrap gap-2 align-items-center">
                 ${a.atanan_kisiler && a.atanan_kisiler.length > 0 ? `
-                  <div class="assigned-badges mb-1">
-                    ${a.atanan_kisiler.map(k => `
+                  <div class="assigned-badges">
+                    ${a.atanan_kisiler.slice(0, 2).map(k => `
                       <span class="assigned-badge kisi">
                         <i class="bi bi-person"></i> ${k.tam_ad || k.ad}
                       </span>
                     `).join('')}
+                    ${a.atanan_kisiler.length > 2 ? `<span class="assigned-badge more">+${a.atanan_kisiler.length - 2}</span>` : ''}
                   </div>
                 ` : ''}
                 ${a.atanan_birimler && a.atanan_birimler.length > 0 ? `
-                  <div class="assigned-badges mb-1">
-                    ${a.atanan_birimler.map(b => `
+                  <div class="assigned-badges">
+                    ${a.atanan_birimler.slice(0, 2).map(b => `
                       <span class="assigned-badge birim">
                         <i class="bi bi-building"></i> ${b.ad}
                       </span>
                     `).join('')}
+                    ${a.atanan_birimler.length > 2 ? `<span class="assigned-badge more">+${a.atanan_birimler.length - 2}</span>` : ''}
                   </div>
                 ` : ''}
-                ${a.bitis_tarihi ? `<span class="text-muted"><i class="bi bi-calendar"></i> ${a.bitis_tarihi}</span>` : ''}
+                ${a.bitis_tarihi ? `
+                  <span class="date-badge ${isOverdue(a.bitis_tarihi, a.durum) ? 'overdue' : ''}">
+                    <i class="bi bi-calendar-event"></i> ${formatShortDate(a.bitis_tarihi)}
+                  </span>
+                ` : ''}
               </div>
             </div>
           </div>
-          <div class="btn-group">
-            <button class="btn btn-sm btn-outline-secondary" onclick="openAdimModal(${a.id})">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="deleteAdim(${a.id})">
-              <i class="bi bi-trash"></i>
-            </button>
+          <div class="step-arrow ms-3">
+            <i class="bi bi-chevron-right text-muted"></i>
           </div>
         </div>
       </div>
@@ -573,21 +579,48 @@ async function openProjeDetay(id) {
 
         ${currentGanttView === 'list' ? `
         <div class="col-md-4">
-          <div class="card">
-            <div class="card-header bg-white">
-              <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Gecmis</h5>
+          <div class="card activity-card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0"><i class="bi bi-activity me-2"></i>Aktivite Akisi</h5>
+              <span class="badge bg-secondary">${guncellemeler.length}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
               ${guncellemeler.length === 0 ? `
-                <div class="text-muted text-center py-3">
-                  Henuz guncelleme yok
+                <div class="text-muted text-center py-4">
+                  <i class="bi bi-clock-history fs-1 d-block mb-2 opacity-50"></i>
+                  Henuz aktivite yok
                 </div>
               ` : `
-                <div class="timeline">
-                  ${guncellemeler.map(g => `
-                    <div class="timeline-item">
-                      <div class="small text-muted">${formatDate(g.created_at)}</div>
-                      <div class="small">${g.aciklama || formatGuncellemeTipi(g.guncelleme_tipi)}</div>
+                <div class="activity-timeline">
+                  ${guncellemeler.map((g, idx) => `
+                    <div class="activity-item ${idx === 0 ? 'latest' : ''}" style="animation-delay: ${idx * 0.05}s">
+                      <div class="activity-icon ${getActivityIconClass(g.guncelleme_tipi)}">
+                        <i class="bi ${getActivityIcon(g.guncelleme_tipi)}"></i>
+                      </div>
+                      <div class="activity-content">
+                        <div class="activity-header">
+                          <span class="activity-type">${getActivityLabel(g.guncelleme_tipi)}</span>
+                          <span class="activity-time">${formatRelativeTime(g.created_at)}</span>
+                        </div>
+                        <div class="activity-description">
+                          ${g.aciklama || formatGuncellemeTipi(g.guncelleme_tipi)}
+                        </div>
+                        ${g.eski_deger && g.yeni_deger ? `
+                          <div class="activity-changes">
+                            <span class="old-value"><i class="bi bi-arrow-right-short"></i>${formatDurum(g.eski_deger)}</span>
+                            <i class="bi bi-arrow-right text-muted mx-1"></i>
+                            <span class="new-value"><i class="bi bi-check-lg"></i>${formatDurum(g.yeni_deger)}</span>
+                          </div>
+                        ` : ''}
+                        ${g.adim_baslik ? `
+                          <div class="activity-target">
+                            <i class="bi bi-link-45deg"></i> ${g.adim_baslik}
+                          </div>
+                        ` : ''}
+                        <div class="activity-date">
+                          <i class="bi bi-calendar3"></i> ${formatDate(g.created_at)}
+                        </div>
+                      </div>
                     </div>
                   `).join('')}
                 </div>
@@ -1380,6 +1413,200 @@ function calculateAdimStats(adimlar) {
   });
 
   return stats;
+}
+
+// ==================== ACTIVITY HELPERS ====================
+function getActivityIcon(tip) {
+  const icons = {
+    'olusturma': 'bi-plus-circle-fill',
+    'durum_degisikligi': 'bi-arrow-repeat',
+    'adim_ekleme': 'bi-plus-square-fill',
+    'adim_silme': 'bi-trash-fill',
+    'adim_durum_degisikligi': 'bi-check2-square'
+  };
+  return icons[tip] || 'bi-clock-history';
+}
+
+function getActivityIconClass(tip) {
+  const classes = {
+    'olusturma': 'activity-create',
+    'durum_degisikligi': 'activity-status',
+    'adim_ekleme': 'activity-add',
+    'adim_silme': 'activity-delete',
+    'adim_durum_degisikligi': 'activity-step-status'
+  };
+  return classes[tip] || 'activity-default';
+}
+
+function getActivityLabel(tip) {
+  const labels = {
+    'olusturma': 'Proje Olusturuldu',
+    'durum_degisikligi': 'Durum Guncellendi',
+    'adim_ekleme': 'Adim Eklendi',
+    'adim_silme': 'Adim Silindi',
+    'adim_durum_degisikligi': 'Adim Durumu'
+  };
+  return labels[tip] || 'Guncelleme';
+}
+
+function formatRelativeTime(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Simdi';
+  if (diffMins < 60) return `${diffMins} dk once`;
+  if (diffHours < 24) return `${diffHours} saat once`;
+  if (diffDays < 7) return `${diffDays} gun once`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} hafta once`;
+  return `${Math.floor(diffDays / 30)} ay once`;
+}
+
+// ==================== ADIM DETAY ====================
+async function openAdimDetay(adimId) {
+  showLoader('Adim detayi yukleniyor...');
+
+  try {
+    const adimlar = await fetch(`${API}/api/projeler/${currentProjeId}/adimlar`).then(r => r.json());
+    const adim = adimlar.find(a => a.id === adimId);
+
+    if (!adim) {
+      showToast('Adim bulunamadi', 'error');
+      hideLoader();
+      return;
+    }
+
+    const modal = document.getElementById('adimDetayModal');
+    const modalBody = modal.querySelector('.modal-body');
+
+    modalBody.innerHTML = `
+      <div class="adim-detay-container">
+        <div class="adim-header mb-4">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="adim-status-icon ${adim.durum}">
+              ${adim.durum === 'tamamlandi' ?
+                '<i class="bi bi-check-circle-fill"></i>' :
+                adim.durum === 'devam_ediyor' ?
+                '<i class="bi bi-play-circle-fill"></i>' :
+                '<i class="bi bi-circle"></i>'
+              }
+            </div>
+            <div>
+              <h4 class="mb-1">${adim.baslik}</h4>
+              <span class="badge badge-status badge-${adim.durum} fs-6">${formatDurum(adim.durum)}</span>
+            </div>
+          </div>
+          ${adim.aciklama ? `
+            <div class="adim-description">
+              <p class="text-muted mb-0">${adim.aciklama}</p>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="detail-card">
+              <div class="detail-icon"><i class="bi bi-calendar-event"></i></div>
+              <div class="detail-info">
+                <span class="detail-label">Baslangic Tarihi</span>
+                <span class="detail-value">${adim.baslangic_tarihi || 'Belirlenmedi'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-card ${isOverdue(adim.bitis_tarihi, adim.durum) ? 'overdue' : ''}">
+              <div class="detail-icon"><i class="bi bi-calendar-check"></i></div>
+              <div class="detail-info">
+                <span class="detail-label">Bitis Tarihi</span>
+                <span class="detail-value">${adim.bitis_tarihi || 'Belirlenmedi'}</span>
+                ${isOverdue(adim.bitis_tarihi, adim.durum) ? '<span class="overdue-badge">Gecikti!</span>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        ${adim.atanan_kisiler && adim.atanan_kisiler.length > 0 ? `
+          <div class="detail-section mb-4">
+            <h6 class="detail-section-title"><i class="bi bi-people me-2"></i>Atanan Kisiler</h6>
+            <div class="assignee-list">
+              ${adim.atanan_kisiler.map(k => `
+                <div class="assignee-card">
+                  <div class="assignee-avatar">
+                    <i class="bi bi-person-fill"></i>
+                  </div>
+                  <div class="assignee-info">
+                    <span class="assignee-name">${k.tam_ad || k.ad}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${adim.atanan_birimler && adim.atanan_birimler.length > 0 ? `
+          <div class="detail-section mb-4">
+            <h6 class="detail-section-title"><i class="bi bi-building me-2"></i>Atanan Birimler</h6>
+            <div class="assignee-list">
+              ${adim.atanan_birimler.map(b => `
+                <div class="assignee-card birim">
+                  <div class="assignee-avatar">
+                    <i class="bi bi-building-fill"></i>
+                  </div>
+                  <div class="assignee-info">
+                    <span class="assignee-name">${b.ad}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${adim.notlar ? `
+          <div class="detail-section">
+            <h6 class="detail-section-title"><i class="bi bi-sticky me-2"></i>Notlar</h6>
+            <div class="notes-content">
+              <p class="mb-0">${adim.notlar}</p>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    // Modal footer butonlarini guncelle
+    const modalFooter = modal.querySelector('.modal-footer');
+    modalFooter.innerHTML = `
+      <button type="button" class="btn btn-outline-danger me-auto" onclick="deleteAdimFromDetail(${adim.id})">
+        <i class="bi bi-trash"></i> Sil
+      </button>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+      <button type="button" class="btn btn-primary" onclick="editAdimFromDetail(${adim.id})">
+        <i class="bi bi-pencil"></i> Duzenle
+      </button>
+    `;
+
+    hideLoader();
+    new bootstrap.Modal(modal).show();
+  } catch (error) {
+    showToast('Adim yuklenirken hata olustu', 'error');
+    hideLoader();
+    console.error(error);
+  }
+}
+
+function editAdimFromDetail(adimId) {
+  bootstrap.Modal.getInstance(document.getElementById('adimDetayModal')).hide();
+  setTimeout(() => openAdimModal(adimId), 300);
+}
+
+async function deleteAdimFromDetail(adimId) {
+  if (!confirm('Bu adimi silmek istediginizden emin misiniz?')) return;
+
+  bootstrap.Modal.getInstance(document.getElementById('adimDetayModal')).hide();
+  await deleteAdim(adimId);
 }
 
 // ==================== GANTT CHART ====================

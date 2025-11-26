@@ -1338,6 +1338,373 @@
       background: #d1fae5;
       color: #059669;
     }
+
+    .assigned-badge.more {
+      background: #94a3b8;
+      color: #fff;
+    }
+
+    /* Step Item Clickable */
+    .step-item.clickable {
+      transition: all 0.3s ease;
+    }
+
+    .step-item.clickable:hover {
+      transform: translateX(8px);
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 20px rgba(67, 97, 238, 0.15);
+    }
+
+    .step-item.clickable:hover .step-arrow i {
+      color: var(--primary-color) !important;
+      transform: translateX(3px);
+    }
+
+    .step-arrow {
+      display: flex;
+      align-items: center;
+    }
+
+    .step-arrow i {
+      transition: all 0.3s ease;
+      font-size: 1.2rem;
+    }
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .date-badge.overdue {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    /* Activity Timeline Styles */
+    .activity-card {
+      border: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .activity-timeline {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid #f1f5f9;
+      animation: fadeInUp 0.4s ease both;
+      transition: background 0.3s;
+    }
+
+    .activity-item:hover {
+      background: #f8fafc;
+    }
+
+    .activity-item.latest {
+      background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(76, 201, 240, 0.05));
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .activity-icon.activity-create {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+    }
+
+    .activity-icon.activity-status {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+    }
+
+    .activity-icon.activity-add {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      color: #fff;
+    }
+
+    .activity-icon.activity-delete {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+    }
+
+    .activity-icon.activity-step-status {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+    }
+
+    .activity-icon.activity-default {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      color: #fff;
+    }
+
+    .activity-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .activity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .activity-type {
+      font-weight: 600;
+      font-size: 12px;
+      color: #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .activity-time {
+      font-size: 11px;
+      color: #94a3b8;
+      background: #f1f5f9;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .activity-description {
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .activity-changes {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .activity-changes .old-value {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-decoration: line-through;
+    }
+
+    .activity-changes .new-value {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .activity-target {
+      font-size: 11px;
+      color: #64748b;
+      background: #f8fafc;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .activity-date {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* Adim Detay Modal Styles */
+    .adim-detay-container {
+      padding: 10px;
+    }
+
+    .adim-status-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .adim-status-icon.beklemede {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .adim-status-icon.devam_ediyor {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #2563eb;
+    }
+
+    .adim-status-icon.tamamlandi {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      color: #059669;
+    }
+
+    .adim-description {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 12px;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .detail-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s;
+    }
+
+    .detail-card:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 12px rgba(67, 97, 238, 0.1);
+    }
+
+    .detail-card.overdue {
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+
+    .detail-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .detail-card.overdue .detail-icon {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .detail-info {
+      flex: 1;
+    }
+
+    .detail-label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+
+    .detail-value {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .overdue-badge {
+      display: inline-block;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    .detail-section {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 12px;
+    }
+
+    .detail-section-title {
+      color: #1e293b;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    .assignee-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .assignee-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s;
+    }
+
+    .assignee-card:hover {
+      border-color: #10b981;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    }
+
+    .assignee-card.birim:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    }
+
+    .assignee-avatar {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .assignee-card.birim .assignee-avatar {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    .assignee-name {
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .notes-content {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      line-height: 1.6;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
   </style>
 </head>
 <body>
@@ -1555,6 +1922,24 @@
           <button type="button" class="btn btn-primary" onclick="saveAdim()">
             <i class="bi bi-check-lg"></i> Kaydet
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adim Detay Modal -->
+  <div class="modal fade" id="adimDetayModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Adim Detayi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Dinamik icerik -->
+        </div>
+        <div class="modal-footer">
+          <!-- Dinamik butonlar -->
         </div>
       </div>
     </div>
