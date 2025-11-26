@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Proje Takip | Onark</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <!-- Onark Custom Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234361ee'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M8 10h4v12H8zM14 14h4v8h-4zM20 8h4v14h-4z' fill='white'/%3E%3C/svg%3E">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,6 +23,7 @@
       --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
       --card-shadow-hover: 0 8px 30px rgba(67, 97, 238, 0.12);
       --sidebar-width: 280px;
+      --sidebar-collapsed-width: 72px;
       --header-height: 0px;
       --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -51,6 +53,18 @@
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
     @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes loginSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes loginPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    @keyframes dotFlashing {
+      0% { opacity: 0.2; }
+      50%, 100% { opacity: 1; }
+    }
 
     /* ==================== LOGIN SCREEN ==================== */
     .login-screen {
@@ -193,9 +207,62 @@
       box-shadow: 0 8px 24px rgba(67, 97, 238, 0.4);
     }
 
-    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .login-btn:disabled { opacity: 1; cursor: not-allowed; transform: none; }
 
     .login-btn .spinner-border { width: 20px; height: 20px; }
+
+    /* Login Loading Animation */
+    .login-btn.loading {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-btn.loading::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+
+    .login-loader {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .login-btn.loading .btn-text { display: none; }
+    .login-btn.loading .login-loader { display: flex; }
+
+    .login-spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: loginSpin 0.8s linear infinite;
+    }
+
+    .login-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .login-dots span {
+      width: 6px;
+      height: 6px;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      animation: dotFlashing 1s infinite;
+    }
+
+    .login-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .login-dots span:nth-child(3) { animation-delay: 0.4s; }
 
     .login-error {
       background: #fef2f2;
@@ -335,11 +402,17 @@
       display: flex;
       flex-direction: column;
       animation: fadeInLeft 0.5s ease;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
     }
 
     .sidebar-header {
       padding: 24px;
       border-bottom: 1px solid rgba(255,255,255,0.08);
+      position: relative;
     }
 
     .sidebar-brand {
@@ -353,12 +426,25 @@
     .sidebar-brand-icon {
       width: 44px;
       height: 44px;
+      min-width: 44px;
       background: rgba(255,255,255,0.15);
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
+      transition: var(--transition-smooth);
+    }
+
+    .sidebar-brand-text {
+      overflow: hidden;
+      white-space: nowrap;
+      transition: opacity 0.2s, width 0.3s;
+    }
+
+    .sidebar.collapsed .sidebar-brand-text {
+      opacity: 0;
+      width: 0;
     }
 
     .sidebar-brand-text h4 {
@@ -373,10 +459,46 @@
       letter-spacing: 1px;
     }
 
+    /* Sidebar Toggle Button */
+    .sidebar-toggle {
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border: 3px solid var(--light-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      font-size: 12px;
+      transition: var(--transition-smooth);
+      z-index: 101;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .sidebar-toggle:hover {
+      transform: translateY(-50%) scale(1.1);
+      box-shadow: 0 4px 12px rgba(67, 97, 238, 0.4);
+    }
+
+    .sidebar-toggle i {
+      transition: transform 0.3s;
+    }
+
+    .sidebar.collapsed .sidebar-toggle i {
+      transform: rotate(180deg);
+    }
+
     .sidebar-nav {
       flex: 1;
       padding: 16px 12px;
       overflow-y: auto;
+      overflow-x: hidden;
     }
 
     .nav-section-title {
@@ -386,6 +508,14 @@
       color: rgba(255,255,255,0.4);
       padding: 16px 16px 8px;
       font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity 0.2s;
+    }
+
+    .sidebar.collapsed .nav-section-title {
+      opacity: 0;
+      padding: 16px 8px 8px;
     }
 
     .sidebar .nav-link {
@@ -399,12 +529,30 @@
       transition: var(--transition-smooth);
       font-size: 14px;
       font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .nav-link {
+      padding: 12px;
+      justify-content: center;
     }
 
     .sidebar .nav-link i {
       font-size: 18px;
       width: 24px;
+      min-width: 24px;
       text-align: center;
+    }
+
+    .sidebar .nav-link span {
+      transition: opacity 0.2s, width 0.3s;
+    }
+
+    .sidebar.collapsed .nav-link span {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
     }
 
     .sidebar .nav-link:hover {
@@ -413,16 +561,54 @@
       transform: translateX(4px);
     }
 
+    .sidebar.collapsed .nav-link:hover {
+      transform: none;
+    }
+
     .sidebar .nav-link.active {
       background: rgba(255,255,255,0.15);
       color: #fff;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
+    /* Sidebar Tooltip for collapsed state */
+    .sidebar.collapsed .nav-link {
+      position: relative;
+    }
+
+    .sidebar.collapsed .nav-link::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--dark-color);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: var(--transition-smooth);
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .sidebar.collapsed .nav-link:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
     .sidebar-footer {
       padding: 16px;
       border-top: 1px solid rgba(255,255,255,0.08);
       background: rgba(0,0,0,0.2);
+      transition: padding 0.3s;
+    }
+
+    .sidebar.collapsed .sidebar-footer {
+      padding: 12px 8px;
     }
 
     .user-card {
@@ -433,11 +619,19 @@
       background: rgba(255,255,255,0.05);
       border-radius: 12px;
       margin-bottom: 12px;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+
+    .sidebar.collapsed .user-card {
+      padding: 8px;
+      justify-content: center;
     }
 
     .user-avatar {
       width: 40px;
       height: 40px;
+      min-width: 40px;
       background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
       border-radius: 10px;
       display: flex;
@@ -448,9 +642,20 @@
       font-weight: 600;
     }
 
-    .user-info { flex: 1; min-width: 0; }
-    .user-name { color: #fff; font-weight: 600; font-size: 14px; display: block; }
-    .user-role { color: rgba(255,255,255,0.5); font-size: 12px; }
+    .user-info {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      transition: opacity 0.2s, width 0.3s;
+    }
+
+    .sidebar.collapsed .user-info {
+      opacity: 0;
+      width: 0;
+    }
+
+    .user-name { color: #fff; font-weight: 600; font-size: 14px; display: block; white-space: nowrap; }
+    .user-role { color: rgba(255,255,255,0.5); font-size: 12px; white-space: nowrap; }
 
     .btn-logout {
       width: 100%;
@@ -467,6 +672,22 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .sidebar.collapsed .btn-logout {
+      padding: 10px;
+    }
+
+    .btn-logout span {
+      transition: opacity 0.2s, width 0.3s;
+    }
+
+    .sidebar.collapsed .btn-logout span {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
     }
 
     .btn-logout:hover {
@@ -481,6 +702,11 @@
       margin-left: var(--sidebar-width);
       padding: 32px;
       min-height: 100vh;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar.collapsed ~ .main-content {
+      margin-left: var(--sidebar-collapsed-width);
     }
 
     #page-content {
@@ -1516,21 +1742,31 @@
 
     /* ==================== RESPONSIVE ==================== */
     @media (max-width: 1024px) {
-      .sidebar { width: 240px; }
-      .main-content { margin-left: 240px; }
-      :root { --sidebar-width: 240px; }
+      :root {
+        --sidebar-width: 240px;
+        --sidebar-collapsed-width: 64px;
+      }
     }
 
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, width 0.3s ease;
+        width: var(--sidebar-width) !important;
       }
 
       .sidebar.open { transform: translateX(0); }
 
+      .sidebar.collapsed {
+        transform: translateX(-100%);
+      }
+
+      .sidebar-toggle {
+        display: none;
+      }
+
       .main-content {
-        margin-left: 0;
+        margin-left: 0 !important;
         padding: 20px 16px;
       }
 
@@ -1551,11 +1787,42 @@
         width: 180px;
         min-width: 180px;
       }
+
+      /* Mobile menu button */
+      .mobile-menu-btn {
+        display: flex !important;
+      }
     }
 
     @media (max-width: 480px) {
       .login-card { padding: 32px 24px; }
       .admin-stats { grid-template-columns: 1fr; }
+    }
+
+    /* Mobile menu button */
+    .mobile-menu-btn {
+      display: none;
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 20px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 99;
+      box-shadow: 0 4px 12px rgba(67, 97, 238, 0.3);
+      transition: var(--transition-smooth);
+    }
+
+    .mobile-menu-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
     }
   </style>
 </head>
@@ -1601,9 +1868,15 @@
             <span class="btn-text">
               <i class="bi bi-box-arrow-in-right"></i> Giris Yap
             </span>
-            <span class="btn-loader" style="display: none;">
-              <span class="spinner-border spinner-border-sm"></span> Giris yapiliyor...
-            </span>
+            <div class="login-loader">
+              <div class="login-spinner"></div>
+              <span>Giris yapiliyor</span>
+              <div class="login-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
           </button>
         </form>
 
@@ -1631,6 +1904,11 @@
 
   <!-- App Container -->
   <div class="app-container" id="appContainer" style="display: none;">
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
+      <i class="bi bi-list"></i>
+    </button>
+
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -1643,34 +1921,37 @@
             <span>by Onark</span>
           </div>
         </a>
+        <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+          <i class="bi bi-chevron-left"></i>
+        </div>
       </div>
 
       <div class="sidebar-nav">
         <div class="nav-section-title">Menu</div>
         <ul class="nav flex-column" id="navMenu">
           <li class="nav-item">
-            <a class="nav-link active" href="#" data-page="dashboard">
-              <i class="bi bi-grid-1x2"></i> Dashboard
+            <a class="nav-link active" href="#" data-page="dashboard" data-tooltip="Dashboard">
+              <i class="bi bi-grid-1x2"></i> <span>Dashboard</span>
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#" data-page="projeler">
-              <i class="bi bi-folder"></i> Projeler
+            <a class="nav-link" href="#" data-page="projeler" data-tooltip="Projeler">
+              <i class="bi bi-folder"></i> <span>Projeler</span>
             </a>
           </li>
           <li class="nav-item admin-only" style="display: none;">
-            <a class="nav-link" href="#" data-page="kisiler">
-              <i class="bi bi-people"></i> Kisiler
+            <a class="nav-link" href="#" data-page="kisiler" data-tooltip="Kisiler">
+              <i class="bi bi-people"></i> <span>Kisiler</span>
             </a>
           </li>
           <li class="nav-item admin-only" style="display: none;">
-            <a class="nav-link" href="#" data-page="birimler">
-              <i class="bi bi-building"></i> Birimler
+            <a class="nav-link" href="#" data-page="birimler" data-tooltip="Birimler">
+              <i class="bi bi-building"></i> <span>Birimler</span>
             </a>
           </li>
           <li class="nav-item admin-only" style="display: none;">
-            <a class="nav-link" href="#" data-page="departmanlar">
-              <i class="bi bi-diagram-3"></i> Departmanlar
+            <a class="nav-link" href="#" data-page="departmanlar" data-tooltip="Departmanlar">
+              <i class="bi bi-diagram-3"></i> <span>Departmanlar</span>
             </a>
           </li>
         </ul>
@@ -1678,8 +1959,8 @@
         <div class="nav-section-title admin-only" style="display: none;">Yonetim</div>
         <ul class="nav flex-column admin-only" style="display: none;">
           <li class="nav-item">
-            <a class="nav-link" href="#" data-page="admin">
-              <i class="bi bi-shield-lock"></i> Admin Paneli
+            <a class="nav-link" href="#" data-page="admin" data-tooltip="Admin Paneli">
+              <i class="bi bi-shield-lock"></i> <span>Admin Paneli</span>
             </a>
           </li>
         </ul>
@@ -1696,7 +1977,7 @@
           </div>
         </div>
         <button class="btn-logout" onclick="handleLogout()">
-          <i class="bi bi-box-arrow-right"></i> Cikis Yap
+          <i class="bi bi-box-arrow-right"></i> <span>Cikis Yap</span>
         </button>
       </div>
     </nav>

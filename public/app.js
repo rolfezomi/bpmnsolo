@@ -38,6 +38,9 @@ function showApp() {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appContainer').style.display = 'flex';
 
+  // Initialize sidebar state
+  initSidebarState();
+
   // Update user info in sidebar
   document.getElementById('userName').textContent = `${currentUser.ad} ${currentUser.soyad}`;
   document.getElementById('userRole').textContent = currentUser.rol === 'admin' ? 'Admin' : 'Kullanici';
@@ -48,6 +51,10 @@ function showApp() {
   // Setup navigation and load dashboard
   setupNavigation();
   loadPage('dashboard');
+
+  // Show Onark watermark
+  const watermark = document.getElementById('onarkWatermark');
+  if (watermark) watermark.style.display = 'flex';
 }
 
 function updateMenuVisibility() {
@@ -68,7 +75,7 @@ async function handleLogin(event) {
   // Show loading state
   loginBtn.classList.add('loading');
   loginBtn.disabled = true;
-  loginError.classList.add('d-none');
+  loginError.style.display = 'none';
 
   try {
     const response = await fetch(`${API}/api/auth/login`, {
@@ -91,8 +98,8 @@ async function handleLogin(event) {
     showApp();
 
   } catch (error) {
-    loginError.textContent = error.message;
-    loginError.classList.remove('d-none');
+    document.getElementById('loginErrorText').textContent = error.message;
+    loginError.style.display = 'flex';
   } finally {
     loginBtn.classList.remove('loading');
     loginBtn.disabled = false;
@@ -107,7 +114,7 @@ function handleLogout() {
 
   // Reset form
   document.getElementById('loginForm').reset();
-  document.getElementById('loginError').classList.add('d-none');
+  document.getElementById('loginError').style.display = 'none';
 
   showLogin();
   showToast('Basariyla cikis yapildi', 'info');
@@ -125,6 +132,45 @@ function togglePassword() {
     toggleBtn.classList.replace('bi-eye-slash', 'bi-eye');
   }
 }
+
+// ==================== SIDEBAR TOGGLE ====================
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+
+  // Save state to localStorage
+  localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+}
+
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('open');
+}
+
+// Initialize sidebar state from localStorage
+function initSidebarState() {
+  const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+  const sidebar = document.getElementById('sidebar');
+
+  if (isCollapsed && window.innerWidth > 768) {
+    sidebar.classList.add('collapsed');
+  }
+}
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+  if (window.innerWidth <= 768 &&
+      sidebar &&
+      sidebar.classList.contains('open') &&
+      !sidebar.contains(e.target) &&
+      mobileMenuBtn &&
+      !mobileMenuBtn.contains(e.target)) {
+    sidebar.classList.remove('open');
+  }
+});
 
 // Check if user is admin
 function isAdmin() {
