@@ -117,6 +117,24 @@ CREATE POLICY "Public access" ON proje_guncellemeleri FOR ALL USING (true) WITH 
 CREATE POLICY "Public access" ON adim_kisiler FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public access" ON adim_birimler FOR ALL USING (true) WITH CHECK (true);
 
+-- Kullanıcılar tablosu (Login sistemi için)
+CREATE TABLE IF NOT EXISTS kullanicilar (
+  id SERIAL PRIMARY KEY,
+  kullanici_adi TEXT NOT NULL UNIQUE,
+  sifre_hash TEXT NOT NULL,
+  ad TEXT NOT NULL,
+  soyad TEXT NOT NULL,
+  email TEXT,
+  rol TEXT DEFAULT 'user' CHECK (rol IN ('admin', 'user')),
+  aktif BOOLEAN DEFAULT true,
+  son_giris TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE kullanicilar ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public access" ON kullanicilar FOR ALL USING (true) WITH CHECK (true);
+
 -- Örnek veriler
 INSERT INTO departmanlar (ad, aciklama) VALUES
   ('Bilgi Teknolojileri', 'IT ve yazılım geliştirme'),
@@ -132,3 +150,7 @@ INSERT INTO kisiler (ad, soyad, email, birim_id, pozisyon) VALUES
   ('Ahmet', 'Yılmaz', 'ahmet@sirket.com', 1, 'Yazılım Geliştirici'),
   ('Ayşe', 'Demir', 'ayse@sirket.com', 1, 'Proje Yöneticisi'),
   ('Mehmet', 'Kaya', 'mehmet@sirket.com', 2, 'Sistem Uzmanı');
+
+-- Admin kullanıcı (şifre: uur007670)
+INSERT INTO kullanicilar (kullanici_adi, sifre_hash, ad, soyad, rol) VALUES
+  ('uguronar', 'uur007670', 'Ugur', 'Onar', 'admin');

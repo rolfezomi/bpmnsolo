@@ -7,6 +7,7 @@ let birimler = [];
 let kisiler = [];
 let projeler = [];
 let currentProjeId = null;
+let currentUser = null;
 
 // Page Loader Elements
 const pageLoader = document.getElementById('pageLoader');
@@ -14,9 +15,126 @@ const toastContainer = document.getElementById('toastContainer');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  loadPage('dashboard');
-  setupNavigation();
+  checkAuth();
 });
+
+// ==================== AUTHENTICATION ====================
+function checkAuth() {
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    showApp();
+  } else {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appContainer').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appContainer').style.display = 'flex';
+
+  // Update user info in sidebar
+  document.getElementById('userName').textContent = `${currentUser.ad} ${currentUser.soyad}`;
+  document.getElementById('userRole').textContent = currentUser.rol === 'admin' ? 'Admin' : 'Kullanici';
+
+  // Show/hide admin-only menu items
+  updateMenuVisibility();
+
+  // Setup navigation and load dashboard
+  setupNavigation();
+  loadPage('dashboard');
+}
+
+function updateMenuVisibility() {
+  const adminItems = document.querySelectorAll('.admin-only');
+  adminItems.forEach(item => {
+    item.style.display = currentUser.rol === 'admin' ? 'block' : 'none';
+  });
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+
+  const username = document.getElementById('login_username').value;
+  const password = document.getElementById('login_password').value;
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+
+  // Show loading state
+  loginBtn.classList.add('loading');
+  loginBtn.disabled = true;
+  loginError.classList.add('d-none');
+
+  try {
+    const response = await fetch(`${API}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kullanici_adi: username, sifre: password })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Giris basarisiz');
+    }
+
+    // Save user to localStorage
+    currentUser = data;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+    showToast(`Hosgeldiniz, ${currentUser.ad}!`, 'success');
+    showApp();
+
+  } catch (error) {
+    loginError.textContent = error.message;
+    loginError.classList.remove('d-none');
+  } finally {
+    loginBtn.classList.remove('loading');
+    loginBtn.disabled = false;
+  }
+}
+
+function handleLogout() {
+  if (!confirm('Cikmak istediginizden emin misiniz?')) return;
+
+  localStorage.removeItem('currentUser');
+  currentUser = null;
+
+  // Reset form
+  document.getElementById('loginForm').reset();
+  document.getElementById('loginError').classList.add('d-none');
+
+  showLogin();
+  showToast('Basariyla cikis yapildi', 'info');
+}
+
+function togglePassword() {
+  const passwordInput = document.getElementById('login_password');
+  const toggleBtn = document.querySelector('.password-toggle i');
+
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    toggleBtn.classList.replace('bi-eye', 'bi-eye-slash');
+  } else {
+    passwordInput.type = 'password';
+    toggleBtn.classList.replace('bi-eye-slash', 'bi-eye');
+  }
+}
+
+// Check if user is admin
+function isAdmin() {
+  return currentUser && currentUser.rol === 'admin';
+}
+
+// Check if user can delete
+function canDelete() {
+  return isAdmin();
+}
 
 // ==================== LOADER & TOAST ====================
 function showLoader(text = 'Yukleniyor...') {
@@ -92,13 +210,36 @@ async function loadPage(page) {
         content.innerHTML = await renderProjeler();
         break;
       case 'kisiler':
+        if (!isAdmin()) {
+          showToast('Bu sayfaya erisim yetkiniz yok', 'error');
+          loadPage('dashboard');
+          return;
+        }
         content.innerHTML = await renderKisiler();
         break;
       case 'birimler':
+        if (!isAdmin()) {
+          showToast('Bu sayfaya erisim yetkiniz yok', 'error');
+          loadPage('dashboard');
+          return;
+        }
         content.innerHTML = await renderBirimler();
         break;
       case 'departmanlar':
+        if (!isAdmin()) {
+          showToast('Bu sayfaya erisim yetkiniz yok', 'error');
+          loadPage('dashboard');
+          return;
+        }
         content.innerHTML = await renderDepartmanlar();
+        break;
+      case 'admin':
+        if (!isAdmin()) {
+          showToast('Bu sayfaya erisim yetkiniz yok', 'error');
+          loadPage('dashboard');
+          return;
+        }
+        content.innerHTML = await renderAdminPanel();
         break;
     }
   } catch (error) {
@@ -121,7 +262,8 @@ function getPageLoadText(page) {
     'projeler': 'Projeler yukleniyor...',
     'kisiler': 'Kisiler yukleniyor...',
     'birimler': 'Birimler yukleniyor...',
-    'departmanlar': 'Departmanlar yukleniyor...'
+    'departmanlar': 'Departmanlar yukleniyor...',
+    'admin': 'Admin paneli yukleniyor...'
   };
   return texts[page] || 'Yukleniyor...';
 }
@@ -323,9 +465,11 @@ async function renderProjeler() {
   return `
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2><i class="bi bi-folder me-2"></i>Projeler</h2>
-      <button class="btn btn-primary" onclick="openProjeModal()">
-        <i class="bi bi-plus-lg"></i> Yeni Proje
-      </button>
+      ${isAdmin() ? `
+        <button class="btn btn-primary" onclick="openProjeModal()">
+          <i class="bi bi-plus-lg"></i> Yeni Proje
+        </button>
+      ` : ''}
     </div>
 
     ${projeler.length === 0 ? `
@@ -333,10 +477,12 @@ async function renderProjeler() {
         <div class="card-body empty-state">
           <i class="bi bi-folder"></i>
           <h5>Henuz proje yok</h5>
-          <p class="text-muted">Yeni bir proje olusturarak baslayabilirsiniz</p>
-          <button class="btn btn-primary" onclick="openProjeModal()">
-            <i class="bi bi-plus-lg"></i> Ilk Projeyi Olustur
-          </button>
+          ${isAdmin() ? `
+            <p class="text-muted">Yeni bir proje olusturarak baslayabilirsiniz</p>
+            <button class="btn btn-primary" onclick="openProjeModal()">
+              <i class="bi bi-plus-lg"></i> Ilk Projeyi Olustur
+            </button>
+          ` : '<p class="text-muted">Henuz goruntulenebilir proje bulunmuyor</p>'}
         </div>
       </div>
     ` : `
@@ -406,9 +552,11 @@ async function openProjeDetay(id) {
       <div class="empty-state py-4">
         <i class="bi bi-list-check"></i>
         <p>Henuz adim yok</p>
-        <button class="btn btn-primary btn-sm" onclick="openAdimModal()">
-          <i class="bi bi-plus-lg"></i> Ilk Adimi Ekle
-        </button>
+        ${isAdmin() ? `
+          <button class="btn btn-primary btn-sm" onclick="openAdimModal()">
+            <i class="bi bi-plus-lg"></i> Ilk Adimi Ekle
+          </button>
+        ` : ''}
       </div>
     ` : adimlar.map((a, index) => `
       <div class="step-item clickable ${a.durum === 'tamamlandi' ? 'completed' : a.durum === 'devam_ediyor' ? 'in-progress' : ''}"
@@ -481,12 +629,14 @@ async function openProjeDetay(id) {
           <span class="badge badge-status badge-${proje.durum} ms-2">${formatDurum(proje.durum)}</span>
         </div>
         <div>
-          <button class="btn btn-outline-primary me-2" onclick="openProjeModal(${id})">
-            <i class="bi bi-pencil"></i> Duzenle
-          </button>
-          <button class="btn btn-outline-danger" onclick="deleteProje(${id})">
-            <i class="bi bi-trash"></i> Sil
-          </button>
+          ${isAdmin() ? `
+            <button class="btn btn-outline-primary me-2" onclick="openProjeModal(${id})">
+              <i class="bi bi-pencil"></i> Duzenle
+            </button>
+            <button class="btn btn-outline-danger" onclick="deleteProje(${id})">
+              <i class="bi bi-trash"></i> Sil
+            </button>
+          ` : ''}
         </div>
       </div>
 
@@ -567,9 +717,11 @@ async function openProjeDetay(id) {
                   </button>
                 </div>
               </div>
-              <button class="btn btn-sm btn-primary" onclick="openAdimModal()">
-                <i class="bi bi-plus-lg"></i> Adim Ekle
-              </button>
+              ${isAdmin() ? `
+                <button class="btn btn-sm btn-primary" onclick="openAdimModal()">
+                  <i class="bi bi-plus-lg"></i> Adim Ekle
+                </button>
+              ` : ''}
             </div>
             <div class="card-body ${currentGanttView === 'gantt' ? 'p-0' : ''}">
               ${currentGanttView === 'gantt' ? ganttViewContent : listViewContent}
@@ -710,6 +862,11 @@ async function saveProje() {
 }
 
 async function deleteProje(id) {
+  if (!canDelete()) {
+    showToast('Silme yetkiniz yok', 'error');
+    return;
+  }
+
   if (!confirm('Bu projeyi silmek istediginizden emin misiniz?')) return;
 
   showLoader('Siliniyor...');
@@ -913,6 +1070,11 @@ async function saveAdim() {
 }
 
 async function deleteAdim(id) {
+  if (!canDelete()) {
+    showToast('Silme yetkiniz yok', 'error');
+    return;
+  }
+
   if (!confirm('Bu adimi silmek istediginizden emin misiniz?')) return;
 
   showLoader('Siliniyor...');
@@ -1579,13 +1741,17 @@ async function openAdimDetay(adimId) {
     // Modal footer butonlarini guncelle
     const modalFooter = modal.querySelector('.modal-footer');
     modalFooter.innerHTML = `
-      <button type="button" class="btn btn-outline-danger me-auto" onclick="deleteAdimFromDetail(${adim.id})">
-        <i class="bi bi-trash"></i> Sil
-      </button>
+      ${isAdmin() ? `
+        <button type="button" class="btn btn-outline-danger me-auto" onclick="deleteAdimFromDetail(${adim.id})">
+          <i class="bi bi-trash"></i> Sil
+        </button>
+      ` : '<div class="me-auto"></div>'}
       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
-      <button type="button" class="btn btn-primary" onclick="editAdimFromDetail(${adim.id})">
-        <i class="bi bi-pencil"></i> Duzenle
-      </button>
+      ${isAdmin() ? `
+        <button type="button" class="btn btn-primary" onclick="editAdimFromDetail(${adim.id})">
+          <i class="bi bi-pencil"></i> Duzenle
+        </button>
+      ` : ''}
     `;
 
     hideLoader();
@@ -1763,4 +1929,219 @@ function isSameDay(date1, date2) {
 function switchProjeView(view) {
   currentGanttView = view;
   openProjeDetay(currentProjeId);
+}
+
+// ==================== ADMIN PANEL ====================
+async function renderAdminPanel() {
+  const kullanicilar = await fetch(`${API}/api/kullanicilar`).then(r => r.json());
+
+  const adminCount = kullanicilar.filter(k => k.rol === 'admin').length;
+  const userCount = kullanicilar.filter(k => k.rol === 'user').length;
+  const activeCount = kullanicilar.filter(k => k.aktif).length;
+  const inactiveCount = kullanicilar.filter(k => !k.aktif).length;
+
+  return `
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2><i class="bi bi-shield-lock me-2"></i>Admin Paneli</h2>
+      <button class="btn btn-primary" onclick="openKullaniciModal()">
+        <i class="bi bi-person-plus"></i> Yeni Kullanici
+      </button>
+    </div>
+
+    <div class="admin-stats">
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="admin-stat-number">${kullanicilar.length}</div>
+        <div class="admin-stat-label">Toplam Kullanici</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon bg-warning bg-opacity-10 text-warning">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="admin-stat-number">${adminCount}</div>
+        <div class="admin-stat-label">Admin</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon bg-info bg-opacity-10 text-info">
+          <i class="bi bi-person"></i>
+        </div>
+        <div class="admin-stat-number">${userCount}</div>
+        <div class="admin-stat-label">Kullanici</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon bg-success bg-opacity-10 text-success">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="admin-stat-number">${activeCount}</div>
+        <div class="admin-stat-label">Aktif</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon bg-danger bg-opacity-10 text-danger">
+          <i class="bi bi-x-circle"></i>
+        </div>
+        <div class="admin-stat-number">${inactiveCount}</div>
+        <div class="admin-stat-label">Pasif</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-people me-2"></i>Kullanicilar</h5>
+      </div>
+      <div class="card-body">
+        ${kullanicilar.length === 0 ? `
+          <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h5>Henuz kullanici yok</h5>
+            <button class="btn btn-primary" onclick="openKullaniciModal()">
+              <i class="bi bi-plus-lg"></i> Ilk Kullaniciyi Ekle
+            </button>
+          </div>
+        ` : `
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Kullanici</th>
+                  <th>Kullanici Adi</th>
+                  <th>E-posta</th>
+                  <th>Rol</th>
+                  <th>Durum</th>
+                  <th>Son Giris</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${kullanicilar.map(k => `
+                  <tr>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="user-avatar me-2" style="width: 36px; height: 36px; background: ${k.rol === 'admin' ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, #60a5fa, #3b82f6)'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff;">
+                          <i class="bi ${k.rol === 'admin' ? 'bi-shield-check' : 'bi-person'}"></i>
+                        </div>
+                        <strong>${k.ad} ${k.soyad}</strong>
+                      </div>
+                    </td>
+                    <td><code>${k.kullanici_adi}</code></td>
+                    <td>${k.email || '-'}</td>
+                    <td><span class="role-badge ${k.rol}">${k.rol === 'admin' ? 'Admin' : 'Kullanici'}</span></td>
+                    <td><span class="status-badge ${k.aktif ? 'active' : 'inactive'}">${k.aktif ? 'Aktif' : 'Pasif'}</span></td>
+                    <td>${k.son_giris ? formatDate(k.son_giris) : 'Henuz giris yapilmadi'}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-outline-primary me-1" onclick="openKullaniciModal(${k.id})">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      ${k.id !== currentUser.id ? `
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteKullanici(${k.id})">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      ` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+async function openKullaniciModal(id = null) {
+  showLoader('Form hazirlaniyor...');
+
+  if (id) {
+    const kullanici = await fetch(`${API}/api/kullanicilar/${id}`).then(r => r.json());
+    document.getElementById('kullaniciModalTitle').textContent = 'Kullanici Duzenle';
+    document.getElementById('kullanici_id').value = kullanici.id;
+    document.getElementById('kullanici_kullanici_adi').value = kullanici.kullanici_adi;
+    document.getElementById('kullanici_sifre').value = '';
+    document.getElementById('kullanici_ad').value = kullanici.ad;
+    document.getElementById('kullanici_soyad').value = kullanici.soyad;
+    document.getElementById('kullanici_email').value = kullanici.email || '';
+    document.getElementById('kullanici_rol').value = kullanici.rol;
+    document.getElementById('kullanici_aktif').value = kullanici.aktif ? 'true' : 'false';
+    document.getElementById('sifreHint').classList.remove('d-none');
+    document.getElementById('kullanici_sifre').required = false;
+  } else {
+    document.getElementById('kullaniciModalTitle').textContent = 'Yeni Kullanici';
+    document.getElementById('kullaniciForm').reset();
+    document.getElementById('kullanici_id').value = '';
+    document.getElementById('kullanici_aktif').value = 'true';
+    document.getElementById('sifreHint').classList.add('d-none');
+    document.getElementById('kullanici_sifre').required = true;
+  }
+
+  hideLoader();
+  new bootstrap.Modal(document.getElementById('kullaniciModal')).show();
+}
+
+async function saveKullanici() {
+  const id = document.getElementById('kullanici_id').value;
+  const data = {
+    kullanici_adi: document.getElementById('kullanici_kullanici_adi').value,
+    ad: document.getElementById('kullanici_ad').value,
+    soyad: document.getElementById('kullanici_soyad').value,
+    email: document.getElementById('kullanici_email').value || null,
+    rol: document.getElementById('kullanici_rol').value,
+    aktif: document.getElementById('kullanici_aktif').value === 'true'
+  };
+
+  const sifre = document.getElementById('kullanici_sifre').value;
+  if (sifre) {
+    data.sifre = sifre;
+  } else if (!id) {
+    showToast('Yeni kullanici icin sifre zorunludur', 'error');
+    return;
+  }
+
+  showLoader('Kaydediliyor...');
+
+  const url = id ? `${API}/api/kullanicilar/${id}` : `${API}/api/kullanicilar`;
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Kaydetme hatasi');
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('kullaniciModal')).hide();
+    showToast(id ? 'Kullanici guncellendi' : 'Kullanici olusturuldu', 'success');
+    await loadPage('admin');
+  } catch (error) {
+    showToast(error.message, 'error');
+    hideLoader();
+  }
+}
+
+async function deleteKullanici(id) {
+  if (!confirm('Bu kullaniciyi silmek istediginizden emin misiniz?')) return;
+
+  showLoader('Siliniyor...');
+
+  try {
+    const response = await fetch(`${API}/api/kullanicilar/${id}`, { method: 'DELETE' });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Silme hatasi');
+    }
+
+    showToast('Kullanici silindi', 'success');
+    await loadPage('admin');
+  } catch (error) {
+    showToast(error.message, 'error');
+    hideLoader();
+  }
 }

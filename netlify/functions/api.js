@@ -622,6 +622,160 @@ exports.handler = async (event, context) => {
       return { statusCode: 200, headers, body: JSON.stringify(stats) };
     }
 
+    // ==================== AUTHENTICATION ====================
+    if (path === '/auth/login' && method === 'POST') {
+      const { kullanici_adi, sifre } = body;
+
+      const { data: user, error } = await supabase
+        .from('kullanicilar')
+        .select('*')
+        .eq('kullanici_adi', kullanici_adi)
+        .eq('sifre_hash', sifre)
+        .eq('aktif', true)
+        .single();
+
+      if (error || !user) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Gecersiz kullanici adi veya sifre' }) };
+      }
+
+      // Son giriş tarihini güncelle
+      await supabase
+        .from('kullanicilar')
+        .update({ son_giris: new Date().toISOString() })
+        .eq('id', user.id);
+
+      // Şifreyi döndürme
+      delete user.sifre_hash;
+
+      return { statusCode: 200, headers, body: JSON.stringify(user) };
+    }
+
+    // ==================== KULLANICI YÖNETİMİ (Admin Panel) ====================
+    if (path === '/kullanicilar' && method === 'GET') {
+      const { data, error } = await supabase
+        .from('kullanicilar')
+        .select('id, kullanici_adi, ad, soyad, email, rol, aktif, son_giris, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    if (path.match(/^\/kullanicilar\/\d+$/) && method === 'GET') {
+      const id = path.split('/')[2];
+      const { data, error } = await supabase
+        .from('kullanicilar')
+        .select('id, kullanici_adi, ad, soyad, email, rol, aktif, son_giris, created_at')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    if (path === '/kullanicilar' && method === 'POST') {
+      const { kullanici_adi, sifre, ad, soyad, email, rol } = body;
+
+      // Kullanıcı adı kontrolü
+      const { data: existing } = await supabase
+        .from('kullanicilar')
+        .select('id')
+        .eq('kullanici_adi', kullanici_adi)
+        .single();
+
+      if (existing) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Bu kullanici adi zaten kullaniliyor' }) };
+      }
+
+      const { data, error } = await supabase
+        .from('kullanicilar')
+        .insert({
+          kullanici_adi,
+          sifre_hash: sifre,
+          ad,
+          soyad,
+          email,
+          rol: rol || 'user'
+        })
+        .select('id, kullanici_adi, ad, soyad, email, rol, aktif, created_at')
+        .single();
+
+      if (error) throw error;
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    if (path.match(/^\/kullanicilar\/\d+$/) && method === 'PUT') {
+      const id = path.split('/')[2];
+      const { kullanici_adi, sifre, ad, soyad, email, rol, aktif } = body;
+
+      // Kullanıcı adı değişiyorsa kontrol et
+      if (kullanici_adi) {
+        const { data: existing } = await supabase
+          .from('kullanicilar')
+          .select('id')
+          .eq('kullanici_adi', kullanici_adi)
+          .neq('id', id)
+          .single();
+
+        if (existing) {
+          return { statusCode: 400, headers, body: JSON.stringify({ error: 'Bu kullanici adi zaten kullaniliyor' }) };
+        }
+      }
+
+      const updateData = {
+        ad,
+        soyad,
+        email,
+        rol,
+        aktif,
+        updated_at: new Date().toISOString()
+      };
+
+      if (kullanici_adi) updateData.kullanici_adi = kullanici_adi;
+      if (sifre) updateData.sifre_hash = sifre;
+
+      const { data, error } = await supabase
+        .from('kullanicilar')
+        .update(updateData)
+        .eq('id', id)
+        .select('id, kullanici_adi, ad, soyad, email, rol, aktif, created_at')
+        .single();
+
+      if (error) throw error;
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    if (path.match(/^\/kullanicilar\/\d+$/) && method === 'DELETE') {
+      const id = path.split('/')[2];
+
+      // Admin kullanıcısını silmeyi engelle
+      const { data: user } = await supabase
+        .from('kullanicilar')
+        .select('rol')
+        .eq('id', id)
+        .single();
+
+      if (user && user.rol === 'admin') {
+        // Admin sayısını kontrol et
+        const { count } = await supabase
+          .from('kullanicilar')
+          .select('*', { count: 'exact', head: true })
+          .eq('rol', 'admin');
+
+        if (count <= 1) {
+          return { statusCode: 400, headers, body: JSON.stringify({ error: 'Son admin kullanici silinemez' }) };
+        }
+      }
+
+      const { error } = await supabase
+        .from('kullanicilar')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+    }
+
     // 404
     return { statusCode: 404, headers, body: JSON.stringify({ error: 'Endpoint bulunamadı' }) };
 
